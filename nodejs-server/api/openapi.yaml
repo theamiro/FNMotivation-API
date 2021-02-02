@@ -1,0 +1,360 @@
+openapi: 3.0.0
+info:
+  title: FNMotivation API
+  description: This is the API for FNMotivation App
+  contact:
+    email: michaelamiro@outlook.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/theamiro/FNMotivation/1.0.0
+  description: FNMotivation API Mock
+tags:
+- name: authenticated
+  description: secure authenticated calls
+- name: public
+  description: unauthenticated calls
+paths:
+  /stories:
+    get:
+      tags:
+      - public
+      operationId: stories
+      parameters:
+      - name: from
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          minimum: 0
+          type: integer
+          format: int32
+      - name: to
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          maximum: 10000
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Success request happy path
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Story'
+                x-content-type: application/json
+        "400":
+          description: bad input parameter
+      x-swagger-router-controller: Public
+  /notifications:
+    get:
+      tags:
+      - authenticated
+      summary: list the recent actions per account
+      operationId: notificationsQuery
+      parameters:
+      - name: readStatus
+        in: query
+        description: The Notifications tied to an account
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: all notifications per your account
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+                x-content-type: application/json
+        "400":
+          description: bad input parameter
+      x-swagger-router-controller: Authenticated
+  /communities:
+    get:
+      tags:
+      - public
+      summary: show the communities
+      operationId: searchInventory
+      parameters:
+      - name: from
+        in: query
+        description: pass an optional search string for looking up inventory
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: skip
+        in: query
+        description: number of records to skip for pagination
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 0
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: search results matching criteria
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Community'
+                x-content-type: application/json
+        "400":
+          description: bad input parameter
+      x-swagger-router-controller: Public
+components:
+  schemas:
+    Notification:
+      required:
+      - createdAt
+      - id
+      - message
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        avatar:
+          type: string
+          example: https://avatar.jpg
+        message:
+          type: string
+          example: Michael Amiro commented on your post
+        read:
+          type: boolean
+          example: true
+          default: false
+        createdAt:
+          type: string
+          format: date-time
+          example: 2016-08-29T09:12:33.001Z
+      example:
+        createdAt: 2016-08-29T09:12:33.001Z
+        read: true
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        avatar: https://avatar.jpg
+        message: Michael Amiro commented on your post
+    User:
+      required:
+      - createdAt
+      - email
+      - firstName
+      - id
+      - lastName
+      - password
+      - username
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        username:
+          type: string
+          example: theamiro
+        email:
+          type: string
+          example: johndoe@gmail.com
+        verified:
+          type: boolean
+          example: true
+        password:
+          type: string
+          example: "1234567890"
+        firstName:
+          type: string
+          example: Michael
+        lastName:
+          type: string
+          example: Amiro
+        gender:
+          type: string
+          example: Male
+        dateOfBirth:
+          type: string
+          example: 1993-08-21
+        avatar:
+          type: string
+          example: https://avatar.com
+        createdAt:
+          type: string
+          format: date-time
+          example: 2016-08-29T09:12:33.001Z
+    Community:
+      required:
+      - createdAt
+      - id
+      - image
+      - name
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        name:
+          type: string
+          example: Drug Addiction
+        image:
+          type: string
+          example: https://avatar.com
+        createdAt:
+          type: string
+          format: date-time
+          example: 2016-08-29T09:12:33.001Z
+      example:
+        image: https://avatar.com
+        createdAt: 2016-08-29T09:12:33.001Z
+        name: Drug Addiction
+        id: "1"
+    Story:
+      required:
+      - body
+      - community
+      - createdAt
+      - id
+      - title
+      - userID
+      - username
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        title:
+          type: string
+          example: This is the first story
+        body:
+          type: string
+          example: |-
+            CEO of Protenus, leveraging AI to reduce risk and improve patient trust for healthcare systems across North America.
+
+            In late May, a nurse anesthetist was sentenced to nearly three years in federal prison for tampering with opioid analgesics intended for patients. For nearly eight months, while working in a hospital surgery and birthing center, he tampered with fentanyl so that he could use the drugs himself
+        community:
+          $ref: '#/components/schemas/Community'
+        userID:
+          type: string
+          example: "1"
+        username:
+          type: string
+          example: johndoe
+        fullname:
+          type: string
+          example: John Doe
+        avatar:
+          type: string
+          format: url
+          example: https://avatar.com
+        createdAt:
+          type: string
+          format: date-time
+          example: 2016-08-29T09:12:33.001Z
+      example:
+        createdAt: 2016-08-29T09:12:33.001Z
+        id: "1"
+        fullname: John Doe
+        avatar: https://avatar.com
+        title: This is the first story
+        body: |-
+          CEO of Protenus, leveraging AI to reduce risk and improve patient trust for healthcare systems across North America.
+
+          In late May, a nurse anesthetist was sentenced to nearly three years in federal prison for tampering with opioid analgesics intended for patients. For nearly eight months, while working in a hospital surgery and birthing center, he tampered with fentanyl so that he could use the drugs himself
+        community:
+          image: https://avatar.com
+          createdAt: 2016-08-29T09:12:33.001Z
+          name: Drug Addiction
+          id: "1"
+        userID: "1"
+        username: johndoe
+    StoryComment:
+      required:
+      - avatar
+      - createdAt
+      - fullName
+      - id
+      - message
+      - storyID
+      - userID
+      - username
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        storyID:
+          type: string
+          example: "1"
+        message:
+          type: string
+          example: This si a comment
+        createdAt:
+          type: string
+          format: date-time
+          example: 2016-08-29T09:12:33.001Z
+        userID:
+          type: string
+          example: "1"
+        username:
+          type: string
+          example: johndoe
+        fullname:
+          type: string
+          example: John Doe
+        avatar:
+          type: string
+          format: url
+          example: https://avatar.com
+    ArticleComment:
+      required:
+      - avatar
+      - createdAt
+      - fullName
+      - id
+      - message
+      - storyID
+      - userID
+      - username
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        articleID:
+          type: string
+          example: "1"
+        message:
+          type: string
+          example: This is a comment
+        createdAt:
+          type: string
+          format: date-time
+          example: 2016-08-29T09:12:33.001Z
+        userID:
+          type: string
+          example: "1"
+        username:
+          type: string
+          example: johndoe
+        fullname:
+          type: string
+          example: John Doe
+        avatar:
+          type: string
+          format: url
+          example: https://avatar.com
