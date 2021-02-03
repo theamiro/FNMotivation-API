@@ -686,7 +686,7 @@ components:
       type: object
       properties:
         id:
-          type: int32
+          type: integer
   securitySchemes:
     auth:
       type: oauth2
