@@ -12,15 +12,34 @@ servers:
 - url: https://virtserver.swaggerhub.com/theamiro/FNMotivation/1.0.0
   description: FNMotivation API Mock
 tags:
-- name: authenticated
-  description: secure authenticated calls
-- name: public
-  description: unauthenticated calls
+- name: auth
+  description: calls to the auth endpoint
+- name: stories
+  description: calls to the stories endpoint
+- name: articles
+  description: calls to the articles endpoint
+- name: communities
+  description: calls to the communities endpoint
+- name: notifications
+  description: calls to the notifications endpoint
+- name: users
+  description: calls to the users endpoint
 paths:
+  /login:
+    post:
+      tags:
+      - auth
+      summary: perform user authentication
+      operationId: login
+      responses:
+        "200":
+          description: OK
+      x-swagger-router-controller: Auth
   /stories:
     get:
       tags:
-      - public
+      - stories
+      summary: show the stories
       operationId: stories
       parameters:
       - name: from
@@ -53,11 +72,95 @@ paths:
                 x-content-type: application/json
         "400":
           description: bad input parameter
-      x-swagger-router-controller: Public
+      x-swagger-router-controller: Stories
+    post:
+      tags:
+      - stories
+      summary: adds a story item
+      description: Adds an item to the system
+      operationId: addStory
+      requestBody:
+        description: Article item to add
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Article'
+      responses:
+        "201":
+          description: story created
+        "400":
+          description: invalid input, object invalid
+        "409":
+          description: an existing item already exists
+      security:
+      - auth:
+        - write:stories
+      x-swagger-router-controller: Stories
+  /articles:
+    get:
+      tags:
+      - articles
+      summary: show the communities
+      operationId: articles
+      parameters:
+      - name: from
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          minimum: 0
+          type: integer
+          format: int32
+      - name: to
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          maximum: 10000
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Success request happy path
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Article'
+                x-content-type: application/json
+        "400":
+          description: bad input parameter
+      x-swagger-router-controller: Articles
+    post:
+      tags:
+      - articles
+      summary: adds an article item
+      description: Adds an item to the system
+      operationId: addArticle
+      requestBody:
+        description: Article item to add
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Article'
+      responses:
+        "201":
+          description: story created
+        "400":
+          description: invalid input, object invalid
+        "409":
+          description: an existing item already exists
+      security:
+      - auth:
+        - write:articles
+      x-swagger-router-controller: Articles
   /notifications:
     get:
       tags:
-      - authenticated
+      - notifications
       summary: list the recent actions per account
       operationId: notificationsQuery
       parameters:
@@ -81,32 +184,22 @@ paths:
                 x-content-type: application/json
         "400":
           description: bad input parameter
-      x-swagger-router-controller: Authenticated
+      x-swagger-router-controller: Notifications
   /communities:
     get:
       tags:
-      - public
+      - communities
       summary: show the communities
       operationId: searchInventory
       parameters:
-      - name: from
+      - name: communityTitle
         in: query
-        description: pass an optional search string for looking up inventory
         required: false
         style: form
         explode: true
         schema:
           type: string
-      - name: skip
-        in: query
-        description: number of records to skip for pagination
-        required: false
-        style: form
-        explode: true
-        schema:
-          minimum: 0
-          type: integer
-          format: int32
+          example: Drug Addiction
       responses:
         "200":
           description: search results matching criteria
@@ -119,7 +212,116 @@ paths:
                 x-content-type: application/json
         "400":
           description: bad input parameter
-      x-swagger-router-controller: Public
+      x-swagger-router-controller: Communities
+    post:
+      tags:
+      - communities
+      summary: adds a community
+      description: Adds an item to the system
+      operationId: addCommunity
+      requestBody:
+        description: Community item to add
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Community'
+      responses:
+        "201":
+          description: community created
+        "400":
+          description: invalid input, object invalid
+        "409":
+          description: an existing item already exists
+      security:
+      - auth:
+        - write:stories
+      x-swagger-router-controller: Communities
+  /communities/{id}:
+    delete:
+      tags:
+      - communities
+      summary: deletes a community
+      operationId: communitiesIdDELETE
+      parameters:
+      - name: id
+        in: path
+        description: ID of the community to be deleted
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Community successfully deleted
+        "404":
+          description: Community not found
+      security:
+      - auth:
+        - write:communities
+      x-swagger-router-controller: Communities
+    patch:
+      tags:
+      - communities
+      summary: Update community
+      description: This can only be done by a logged in admin.
+      operationId: updateCommunity
+      parameters:
+      - name: id
+        in: path
+        description: community id needed to update
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: Updated community object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Community'
+        required: true
+      responses:
+        "400":
+          description: Invalid community supplied
+        "404":
+          description: Community not found
+      security:
+      - auth:
+        - write:communities
+      x-swagger-router-controller: Communities
+  /user/follow/{id}:
+    post:
+      tags:
+      - users
+      summary: follow a specific user
+      description: Follow the user
+      operationId: followUser
+      parameters:
+      - name: id
+        in: path
+        description: ID of the User
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: Article item to add
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        "201":
+          description: user followed successfully
+        "400":
+          description: invalid input, object invalid
+      security:
+      - auth:
+        - write:stories
+      x-swagger-router-controller: Users
 components:
   schemas:
     Notification:
@@ -187,6 +389,10 @@ components:
         gender:
           type: string
           example: Male
+          enum:
+          - Male
+          - Female
+          - Prefer not to say
         dateOfBirth:
           type: string
           example: 1993-08-21
@@ -265,8 +471,29 @@ components:
           type: string
           format: date-time
           example: 2016-08-29T09:12:33.001Z
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoryComment'
       example:
         createdAt: 2016-08-29T09:12:33.001Z
+        comments:
+        - storyID: "1"
+          createdAt: 2016-08-29T09:12:33.001Z
+          id: "1"
+          fullname: John Doe
+          avatar: https://avatar.com
+          message: This si a comment
+          userID: "1"
+          username: johndoe
+        - storyID: "1"
+          createdAt: 2016-08-29T09:12:33.001Z
+          id: "1"
+          fullname: John Doe
+          avatar: https://avatar.com
+          message: This si a comment
+          userID: "1"
+          username: johndoe
         id: "1"
         fullname: John Doe
         avatar: https://avatar.com
@@ -275,6 +502,82 @@ components:
           CEO of Protenus, leveraging AI to reduce risk and improve patient trust for healthcare systems across North America.
 
           In late May, a nurse anesthetist was sentenced to nearly three years in federal prison for tampering with opioid analgesics intended for patients. For nearly eight months, while working in a hospital surgery and birthing center, he tampered with fentanyl so that he could use the drugs himself
+        community:
+          image: https://avatar.com
+          createdAt: 2016-08-29T09:12:33.001Z
+          name: Drug Addiction
+          id: "1"
+        userID: "1"
+        username: johndoe
+    Article:
+      required:
+      - community
+      - createdAt
+      - fullname
+      - id
+      - title
+      - url
+      - userID
+      - username
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        title:
+          type: string
+          example: This is the first story
+        utl:
+          type: string
+          format: url
+          example: https://twitter.com/
+        community:
+          $ref: '#/components/schemas/Community'
+        userID:
+          type: string
+          example: "1"
+        username:
+          type: string
+          example: johndoe
+        fullname:
+          type: string
+          example: John Doe
+        avatar:
+          type: string
+          format: url
+          example: https://avatar.com
+        createdAt:
+          type: string
+          format: date-time
+          example: 2016-08-29T09:12:33.001Z
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleComment'
+      example:
+        createdAt: 2016-08-29T09:12:33.001Z
+        comments:
+        - createdAt: 2016-08-29T09:12:33.001Z
+          articleID: "1"
+          id: "1"
+          fullname: John Doe
+          avatar: https://avatar.com
+          message: This is a comment
+          userID: "1"
+          username: johndoe
+        - createdAt: 2016-08-29T09:12:33.001Z
+          articleID: "1"
+          id: "1"
+          fullname: John Doe
+          avatar: https://avatar.com
+          message: This is a comment
+          userID: "1"
+          username: johndoe
+        id: "1"
+        fullname: John Doe
+        avatar: https://avatar.com
+        title: This is the first story
+        utl: https://twitter.com/
         community:
           image: https://avatar.com
           createdAt: 2016-08-29T09:12:33.001Z
@@ -320,6 +623,15 @@ components:
           type: string
           format: url
           example: https://avatar.com
+      example:
+        storyID: "1"
+        createdAt: 2016-08-29T09:12:33.001Z
+        id: "1"
+        fullname: John Doe
+        avatar: https://avatar.com
+        message: This si a comment
+        userID: "1"
+        username: johndoe
     ArticleComment:
       required:
       - avatar
@@ -358,3 +670,30 @@ components:
           type: string
           format: url
           example: https://avatar.com
+      example:
+        createdAt: 2016-08-29T09:12:33.001Z
+        articleID: "1"
+        id: "1"
+        fullname: John Doe
+        avatar: https://avatar.com
+        message: This is a comment
+        userID: "1"
+        username: johndoe
+    Tag:
+      required:
+      - id
+      - name
+      type: object
+      properties:
+        id:
+          type: int32
+  securitySchemes:
+    auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: http://petstore.swagger.io/oauth/dialog
+          scopes:
+            write:stories: creating stories
+            write:article: creating articles
+            write:communities: creating communities
